@@ -880,31 +880,36 @@ function copyUrl(url,btn){
 
 async function openNews(ticker){
   document.getElementById('newsTicker').textContent=ticker+' Haberleri';
-  document.getElementById('newsBody').innerHTML='<div class="news-loading"><span class="big-spin">⟳</span>Yükleniyor...</div>';
+  document.getElementById('newsBody').innerHTML='<div class="news-loading"><span class="big-spin">&#8635;</span>Y&uuml;kleniyor...</div>';
   document.getElementById('newsOverlay').classList.add('open');
   const items=await fetchNews(ticker);
   if(!items.length){
-    document.getElementById('newsBody').innerHTML='<div class="news-empty">Son 7 günde <strong>'+ticker+'</strong> için haber bulunamadı.</div>';
+    document.getElementById('newsBody').innerHTML='<div class="news-empty">Son 7 g&uuml;nde <strong>'+ticker+'</strong> i&ccedil;in haber bulunamad&#305;.</div>';
     return;
   }
-  window._nUrls={};
-  document.getElementById('newsBody').innerHTML=items.map((n,i)=>{
-    const url=n.url||'';
-    window._nUrls[i]=url;
-    const hasUrl=url.startsWith('http');
+  const html = items.map(function(n){
+    const url = (n.url && n.url.indexOf('http')===0) ? n.url : '';
+    const src = n.source || 'Haber';
+    const ago = timeAgo(n.datetime);
+    const headline = n.headline || '';
+    const summary = n.summary ? n.summary.slice(0,200)+(n.summary.length>200?'...':'') : '';
+    let linkHtml = '';
+    if(url){
+      linkHtml = '<div style="margin-top:7px;">'
+        + '<a href="'+url+'" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:4px 12px;background:rgba(74,158,255,0.12);border:1px solid rgba(74,158,255,0.35);border-radius:5px;color:#4a9eff;font-size:11px;font-weight:600;text-decoration:none;cursor:pointer;">Haberi Oku &rarr;</a>'
+        + '&nbsp;<button onclick="(function(){var t=document.createElement('textarea');t.value=''+url.replace(/'/g,"\'")+ '';document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);this.textContent='Kopyaland&#305;!';setTimeout(function(){},1500);}).call(this)" style="padding:4px 10px;background:var(--bg3);border:1px solid var(--border2);border-radius:5px;color:var(--text2);font-size:11px;cursor:pointer;font-family:inherit;">&#128279; Linki Kopyala</button>'
+        + '</div>';
+    }
     return '<div class="news-item">'
-      +'<div class="news-item-header"><span class="news-source">'+(n.source||'Haber')+'</span><span class="news-time">'+timeAgo(n.datetime)+'</span></div>'
-      +'<p class="news-headline">'+n.headline+'</p>'
-      +(n.summary?'<p class="news-summary">'+n.summary.slice(0,200)+(n.summary.length>200?'…':'')+'</p>':'')
-      +(hasUrl
-        ? '<div style="display:flex;gap:6px;align-items:center;margin-top:6px;">'
-          +'<a class="news-read-btn" href="'+url+'" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">Haberi oku ↗</a>'
-          +'<button class="news-copy-btn" id="cb'+i+'" onclick="copyUrl(window._nUrls['+i+'],this)">🔗 Linki Kopyala</button>'
-          +'</div>'
-        : '<span style="font-size:11px;color:var(--text3);">Link yok</span>')
+      +'<div class="news-item-header"><span class="news-source">'+src+'</span><span class="news-time">'+ago+'</span></div>'
+      +'<p class="news-headline">'+headline+'</p>'
+      +(summary ? '<p class="news-summary">'+summary+'</p>' : '')
+      +linkHtml
       +'</div>';
   }).join('');
+  document.getElementById('newsBody').innerHTML = html;
 }
+
 function closeNews(){document.getElementById('newsOverlay').classList.remove('open');}
 function newsOvClick(e){if(e.target===document.getElementById('newsOverlay'))closeNews();}
 function timeAgo(ts){const s=Math.floor(Date.now()/1000-ts);if(s<60)return s+'s önce';if(s<3600)return Math.floor(s/60)+'dk önce';if(s<86400)return Math.floor(s/3600)+'sa önce';return Math.floor(s/86400)+'g önce';}
